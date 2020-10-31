@@ -1,0 +1,5 @@
+# Python 3.6~
+pip install -y elasticsearch
+pip install -y numpy
+pip install -y pandas
+pip install -y flask

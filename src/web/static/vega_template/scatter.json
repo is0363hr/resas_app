@@ -1,0 +1,202 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "description": "A scatterplot showing horsepower and miles per gallons that opens a Google search for the car that you click on.",
+  "autosize": {
+    "type": "fit",
+    "resize": true,
+    "contains": "padding"
+  },
+  "width": 600,
+  "height": 600,
+  "style": "cell",
+  "data": [
+    {
+      "name": "data_0",
+      "source": ["source_0"],
+      "transform": [
+        {
+          "type": "formula",
+          "expr": "datum.value1",
+          "as": "xplot"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.value2",
+          "as": "yplot"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.lables",
+          "as": "origin"
+        },
+        {
+          "type": "formula",
+          "expr": "datum.name",
+          "as": "name"
+        },
+        {
+          "type": "sample",
+          "size": 2000
+        }
+      ]
+    }
+  ],
+  "marks": [
+    {
+      "name": "marks",
+      "type": "symbol",
+      "style": [
+        "point"
+      ],
+      "from": {
+        "data": "data_0"
+      },
+      "encode": {
+        "update": {
+          "opacity": {
+            "value": 0.7
+          },
+          "fill": {
+            "value": "transparent"
+          },
+          "stroke": {
+            "scale": "color",
+            "field": "origin"
+          },
+          "tooltip": {
+            "signal": "''+datum[\"name\"]"
+          },
+          "x": {
+            "scale": "x",
+            "field": "xplot"
+          },
+          "y": {
+            "scale": "y",
+            "field": "yplot"
+          }
+        }
+      }
+    }
+  ],
+  "scales": [
+    {
+      "name": "x",
+      "type": "linear",
+      "domain": {
+        "data": "data_0",
+        "field": "xplot"
+      },
+      "range": [
+        0,
+        {
+          "signal": "width"
+        }
+      ],
+      "nice": true,
+      "zero": true
+    },
+    {
+      "name": "y",
+      "type": "linear",
+      "domain": {
+        "data": "data_0",
+        "field": "yplot"
+      },
+      "range": [
+        {
+          "signal": "height"
+        },
+        0
+      ],
+      "nice": true,
+      "zero": true
+    },
+    {
+      "name": "color",
+      "type": "ordinal",
+      "domain": {
+        "data": "data_0",
+        "field": "origin",
+        "sort": true
+      },
+      "range": "category"
+    }
+  ],
+  "axes": [
+    {
+      "scale": "x",
+      "orient": "bottom",
+      "grid": false,
+      "title": "xplot",
+      "labelFlush": true,
+      "labelOverlap": true,
+      "tickCount": {
+        "signal": "ceil(width/40)"
+      },
+      "zindex": 1
+    },
+    {
+      "scale": "x",
+      "orient": "bottom",
+      "gridScale": "y",
+      "grid": true,
+      "tickCount": {
+        "signal": "ceil(width/40)"
+      },
+      "domain": false,
+      "labels": false,
+      "maxExtent": 0,
+      "minExtent": 0,
+      "ticks": false,
+      "zindex": 0
+    },
+    {
+      "scale": "y",
+      "orient": "left",
+      "grid": false,
+      "title": "yplot",
+      "labelOverlap": true,
+      "tickCount": {
+        "signal": "ceil(height/40)"
+      },
+      "zindex": 1
+    },
+    {
+      "scale": "y",
+      "orient": "left",
+      "gridScale": "x",
+      "grid": true,
+      "tickCount": {
+        "signal": "ceil(height/40)"
+      },
+      "domain": false,
+      "labels": false,
+      "maxExtent": 0,
+      "minExtent": 0,
+      "ticks": false,
+      "zindex": 0
+    }
+  ],
+  "legends": [
+    {
+      "stroke": "color",
+      "gradientLength": {
+        "signal": "clamp(height, 64, 200)"
+      },
+      "symbolType": "circle",
+      "title": "origin",
+      "encode": {
+        "symbols": {
+          "update": {
+            "fill": {
+              "value": "transparent"
+            },
+            "opacity": {
+              "value": 0.7
+            }
+          }
+        }
+      }
+    }
+  ]
+}

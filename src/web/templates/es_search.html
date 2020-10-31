@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      href="//cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="../css/es_search.css" />
+    <script src="//code.jquery.com/jquery-3.3.1.js"></script>
+    <script src="//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="//cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+    <script src="https://unpkg.com/simple-statistics@7.0.2/dist/simple-statistics.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.4.0"></script>
+    <!--    <script src="https://cdn.jsdelivr.net/npm/vega-lite@3.3.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@4.2.0"></script> -->
+
+    <title>elasticsearch検索</title>
+  </head>
+  <body>
+    <h1>データベース検索</h1>
+
+    <h3>DB選択</h3>
+    <select id="index">
+      <option disabled selected value>DBを選んでください</option>
+      {% for key in index.keys() %}
+      <option value="{{ key }}">{{ key }}</option>
+      {% endfor %}
+    </select>
+
+    <h3>query設定</h3>
+    <div id="column">
+      <p>指定するカラム名：<input type="text" name="column1" size="4" /></p>
+    </div>
+    <a href="javascript: void(0);" onclick="plus()">＋入力枠を追加する</a>
+    <p>
+      <input name="term" type="radio" value="match" checked />一致
+      <input name="term" type="radio" value="except" />除外
+    </p>
+
+    <h3>並び替え</h3>
+    <input class="sort" type="radio" name="sort" value="asc" checked />昇順
+    <input class="sort" type="radio" name="sort" value="desc" />降順
+
+    <h3>検索数</h3>
+    <input type="text" id="num" size="4" />
+
+    <p>
+      <button id="search">検索</button>
+    </p>
+
+    <br />
+    <hr />
+    <h2>検索クエリ表示</h2>
+    <p id="query"></p>
+
+    <br />
+    <hr />
+    <h2>検索結果表示</h2>
+    <p id="result"></p>
+
+    <script>
+      var plus;
+      $(document).ready(function() {
+        var count = 1;
+
+        // 引数 ⇒ なし
+        plus = function() {
+          var div_element = document.createElement("div");
+          // 入力枠を追加する
+          div_element.innerHTML =
+            '<p>指定するカラム名：<input type="text" name="column' +
+            ++count +
+            '" size="4" /></p>';
+          var parent_object = document.getElementById("column");
+          parent_object.appendChild(div_element);
+        };
+
+        //db選択
+        $("#index").change(function() {
+          var val = $("#index").val();
+          console.log(val);
+        });
+
+        //searchボタン(未完成)
+        $("#search").click(function() {
+          var column = document.getElementById("num").value;
+          var sort = document.getElementByName("sort").value;
+          var num = document.getElementById("num").value;
+
+          //デバッグ用検索結果表示（未完成）
+          //pythonのes_tool.pyのget_all_queryを実行したい
+          //aのパスで受け取ったら、Pythonで書いた関数Aを実行して、その結果をJSON形式で返す。
+          //JSはクリック後、Ajax通信でaのパスめがけてリクエストを送信し、結果を受け取り画面内に反映します。
+          var index = $("#index").val();
+        });
+
+        //デバッグ用クエリ表示（未完成）
+        $("#index, .sort, #num").change(function() {
+          var index = $("#index").val();
+          var sort = $(".sort").val();
+          var num = $("#num").val();
+
+          var query = document.getElementById("query");
+          query.innerHTML =
+            "GET /" +
+            index +
+            "/_search" +
+            "<br /> " +
+            '{"query":{"match_all":{}}}';
+        });
+      });
+    </script>
+  </body>
+</html>

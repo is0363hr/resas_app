@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="//cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"/>
+    <script src="//code.jquery.com/jquery-3.3.1.js"></script>
+    <script src="//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script> 
+    <script src="//cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+    <script src="https://unpkg.com/simple-statistics@7.0.2/dist/simple-statistics.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.4.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@3.3.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@4.2.0"></script>
+    
+    <title>デモ画面(VEGA-Lite)</title>
+</head>
+<body>
+<div>
+    <h1>市町村選択用</h1>
+    <p>都道府県</p>
+    <select id="preflist">
+        <option value="0" selected></option>
+    </select>
+    <p>市町村</p>
+    <select id="citylist">
+        <option value="-" selected></option>
+    </select>
+    <p>
+    <button id="change_btn">データ変更</button>
+    </p>
+</div>
+<br>
+<div>
+    <h1>データ数：<span id="data_length"></span></h1>
+    <p>人工増減率ランキング</p>
+    <p id="rank1"></p>
+    <p>高齢者の割合ランキング</p>
+    <p id="rank2"></p>
+</div>
+<div>
+    <h1>グラフ</h1>
+    <p><button id="graph">グラフ描画</button></p>
+    <div id="view"></div>
+    <div id="view2"></div>
+    <div id="view3"></div>
+</div>
+<h1>テーブル表示</h1>
+<table id="example" class="display" style="width:100%">
+    <thead>
+        <tr>
+            {% for key in data[0].keys() %}
+                <th>{{key}}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in data %}
+        <tr>
+            {% for key in d.keys() %}
+                <th>{{d[key]}}</th>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+            <tr>
+                {% for key in data[0].keys() %}
+                    <th>{{key}}</th>
+                {% endfor %}
+            </tr>
+        </tfoot>
+</table>
+
+<script>
+    data = {{ data | tojson }};
+    pref = null;
+    cities = null;
+
+$(document).ready(function() {
+    $.getJSON("/static/prefectures.json", function(json){
+        pref = json;
+    //    console.log( typeof(pref) );
+    //    console.log(pref);
+        make_pref_select();
+    });
+    $.getJSON("/static/cities.json", function(json){
+        cities = json;
+    //    console.log( typeof(pref) );
+    //    console.log(pref);
+        make_city_select(0);
+    });
+    //make_select();
+
+    data.sort((a, b) => parseFloat(b.rate) - parseFloat(a.rate));
+    console.log("descending", data);
+
+
+    $("#data_length").text(data.length);
+
+    $('#example').DataTable( {
+        initComplete: function () {
+            this.api().columns().every( function () {
+                var column = this;
+                var select = $('<select><option value=""></option></select>')
+                    .appendTo( $(column.footer()).empty() )
+                    .on( 'change', function () {
+                        var val = $.fn.dataTable.util.escapeRegex(
+                            $(this).val()
+                        );
+ 
+                        column
+                            .search( val ? '^'+val+'$' : '', true, false )
+                            .draw();
+                    } );
+ 
+                column.data().unique().sort().each( function ( d, j ) {
+                    select.append( '<option value="'+d+'">'+d+'</option>' )
+                } );
+            } );
+        }
+    });
+
+    /**
+     * 都道府県
+     */
+    function make_pref_select(){
+        var select = $("#preflist");
+        for(let d of pref){
+            select.append( '<option value="'+d["prefCode"]+'">'+d["prefName"]+'</option>' )
+        }
+    };
+
+    /**
+     * 市町村
+     */
+    function make_city_select(num){
+        var select = $("#citylist");
+        select.empty();
+        select.append( '<option value="-" selected></option>' );
+        for(let d of cities[num]){
+            select.append( '<option value="'+d["cityCode"]+'">'+d["cityName"]+'</option>' );
+        }
+    };
+
+    /**
+     * 都道府県変更時
+     */
+    $('#preflist').change(function() {
+        // 選択されているvalue属性値を取り出す
+        var val = $('#preflist').val();
+        console.log(val); // 出力：ABC
+        // 選択されている表示文字列を取り出す
+        var txt = $('#preflist option:selected').text();
+        console.log(txt); // 出力：えーびーしー
+        if(val>0){
+            console.log(txt); // 出力：えーびーしー
+            make_city_select(val-1);
+        }
+    });
+
+    $('#citylist').change(function() {
+        // 選択されているvalue属性値を取り出す
+        var val = $('#citylist').val();
+        console.log(val); // 出力：ABC
+        // 選択されている表示文字列を取り出す
+        var txt = $('#citylist option:selected').text();
+        console.log(txt); // 出力：えーびーしー
+    });
+
+    /**
+     * 計算式の出力
+     */
+    $("#change_btn").click(function(){
+        var city = $("#citylist").val();
+
+        console.log(city);
+
+        console.log(rank1+1);
+        $("#rank1").text(rank1+1);
+
+        var rank2 = data.findIndex(function(d, index, array){
+            if(d.cityCode == city){
+                return true
+            }
+        });
+
+        console.log(rank2+1);
+        $("#rank2").text(rank2+1);
+    });
+
+    /**
+     * VEGA-Lite
+     * Scatter(散布図)
+     */
+     $("#graph").click(function(){
+        $.getJSON("/static/vega_lite_template/scatter_lite.json", function(json){
+            var spec = json;
+            //console.log(spec);
+
+            /*
+            var d = {
+                "name" : "table1",
+                "values" : data
+            };
+            spec["data"].push(d);
+            */
+            spec["data"] = {"values":data};
+            
+            var t = [
+                {"calculate": "datum.value", "as": "xplot"},
+                {"calculate": "datum.rate", "as": "yplot"},
+                {"calculate": "datum.prefName", "as": "origin"},
+//                {"calculate": "datum.cityName", "as": "name"},
+//                {"type": "formula", "expr": "datum.cityName", "as": "name"},
+                {"sample" : 2000}
+            ]; 
+            spec["transform"] = spec["transform"].concat(t);
+            spec["encoding"]["tooltip"]["field"]="cityName";
+
+            //console.log(spec);
+            //render(spec);
+            vegaEmbed('#view', spec); // Draw
+
+
+            // comipile vega-lite -> vega
+            //var vgSpec = vl.compile(spec, {"logger": "debug"}).spec;
+            //console.log(JSON.stringify(vgSpec,undefined,1));
+        });
+     });
+
+     $("#graph").click(function(){
+        $.getJSON("/static/vega_template/bar_chart.json", function(json){
+            var spec = json;
+            spec.data[0].values = data;
+            spec.data[0].transform =  [
+                {"type": "formula", "expr": "datum.value", "as": "amount"},
+                {"type": "formula", "expr": "datum.prefName", "as": "category"}
+            ]; 
+            //console.log(spec);
+            //render(spec);
+            vegaEmbed('#view2', spec); // Draw
+        });
+     });
+
+
+     $("#graph").click(function(){
+        $.getJSON("/static/vega_template/pie_chart.json", function(json){
+            var spec = json;
+            var temp = [];
+
+            spec.data[0].values = data;
+            temp = spec.data[0].transform;
+            temp.unshift({"type": "formula", "as": "field", "expr": "datum.value" })
+            temp.unshift({"type": "formula", "as": "id", "expr": "datum.prefName" })
+            delete spec.data[0]["transform"]
+            spec.data[0].transform = temp
+            //console.log(spec);
+            //render(spec);
+            vegaEmbed('#view3', spec); // Draw
+        });
+     });
+
+
+    /**
+     * VEGA Render
+     */
+     function render(spec) {
+        console.log("描画");
+        view = new vega.View(vega.parse(spec), {
+            renderer:  'canvas',  // renderer (canvas or svg)
+            container: '#view',   // parent DOM container
+            hover:     true       // enable hover processing
+        });
+        view.logLevel(vega.Debug);
+        return view.runAsync();
+    }
+});
+
+</script>
+</body>
+</html>

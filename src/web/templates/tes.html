@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+</head>
+<body>
+  <div id="view"></div>
+  <div id="edit_area"></div>
+  <select id="guraph">
+  <option value="サンプル1">サンプル1</option>
+
+  <option value="サンプル2">サンプル2</option>
+  <option value="サンプル3">サンプル3</option>
+  </select>
+  <input type="button" value="ボタン" onclick="myfunc('guraph');">
+  <script type="text/javascript">
+    var mes = {{ message|tojson }};
+  	function myfunc(guraph){
+      var obj = document.getElementById(guraph);
+      var idx = obj.selectedIndex;       //インデックス番号を取得
+      var val = obj.options[idx].value;  //value値を取得
+      var txt  = obj.options[idx].text;  //ラベルを取得       
+      if(txt == "サンプル1"){
+        var url = 'https://vega.github.io/vega/examples/bar-chart.vg.json';
+      }else if(txt == "サンプル2"){
+        var url = 'https://vega.github.io/vega/examples/pie-chart.vg.json';
+      }
+      fetch(url)
+          .then(res => res.json())
+          .then(spec => render(spec,guraph))
+          .catch(err => console.error(err));
+    }
+    
+    //現在できること
+    //固定した数にのみデータを挿入することが可能
+    //棒グラフにのみ対応している *spec.data[0].values[tmp].amount<-amountをfieldにすれば円に対応することができる
+    function render(spec,guraph) {
+      var obj = document.getElementById(guraph);
+      var idx = obj.selectedIndex;       //インデックス番号を取得
+      var val = obj.options[idx].value;  //value値を取得
+      var txt  = obj.options[idx].text;  //ラベルを取得    
+      var temp = []       //valuesを再定義する際の配列
+      var temp2 = []      //transformを再定義する際の配列
+      delete spec.data[0]["values"]
+
+      if(txt == "サンプル1"){
+        for(var i=0; i<8 ;i++){
+          temp.push({"category" : i, "noonValue": mes[i]["noonValue"]})
+        }
+        spec.data[0].values = temp
+      }
+      else if(txt == "サンプル2"){
+        for(var i=0; i<8 ;i++){
+          temp.push({"id" : i, "field": i+3})
+        }
+        spec.data[0].values = temp
+      }
+      if("transform" in spec.data[0]){
+        //transformがある場合
+        temp2=spec.data[0].transform
+        temp2.unshift({"type": "formula", "as": "field","expr": "datum.field-3" })
+        //valuesの要素を2つ変更する場合
+        //temp2.unshift({"type": "formula", "as": "field","expr": "datum.field-3" }) 
+        delete spec.data[0]["transform"]
+        spec.data[0].transform = temp2
+      }
+      else{
+        //transformがない場合
+        //spec.data[0].transform =[ {"type": "formula", "as": "category", "expr": "datum.category"} ] ;
+        spec.data[0].transform =[ {"type": "formula", "as": "amount", "expr": "datum.noonValue"} ] ;
+      }
+
+      view = new vega.View(vega.parse(spec), {
+        renderer:  'canvas',  // renderer (canvas or svg)
+        container: '#view',   // parent DOM container
+        hover:     true       // enable hover processing
+      });
+      return view.runAsync();
+	 };
+
+
+  </script>
+</body>
+</html>

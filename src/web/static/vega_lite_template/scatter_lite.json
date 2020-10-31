@@ -1,0 +1,19 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+  "description": "A scatterplot showing horsepower and miles per gallons that opens a Google search for the car that you click on.",
+  "width": 600,
+  "height": 600,
+  "autosize": {
+    "type": "fit",
+    "contains": "padding"
+  },
+  "data": null,
+  "mark": "point",
+  "transform": [],
+  "encoding": {
+    "x": {"field": "xplot", "type": "quantitative"},
+    "y": {"field": "yplot", "type": "quantitative"},
+    "color": {"field": "origin", "type": "nominal"},
+    "tooltip": {"field": "name", "type": "nominal"}
+  }
+}

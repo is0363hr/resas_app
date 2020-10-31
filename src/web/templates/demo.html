@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      href="//cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"
+    />
+    <script src="//code.jquery.com/jquery-3.3.1.js"></script>
+    <script src="//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script src="//cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+    <script src="https://unpkg.com/simple-statistics@7.0.2/dist/simple-statistics.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.4.0"></script>
+    <!--    <script src="https://cdn.jsdelivr.net/npm/vega-lite@3.3.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@4.2.0"></script> -->
+
+    <title>デモ画面</title>
+  </head>
+  <body>
+    <div>
+      <h1>市町村選択用</h1>
+      <p>都道府県</p>
+      <select id="preflist">
+        <option value="0" selected></option>
+      </select>
+      <p>市町村</p>
+      <select id="citylist">
+        <option value="-" selected></option>
+      </select>
+      <p>
+        <button id="change_btn">データ変更</button>
+      </p>
+    </div>
+    <br />
+    <div>
+      <h1>データ数：<span id="data_length"></span></h1>
+      <p>人工増減率ランキング</p>
+      <p id="rank1"></p>
+      <p>高齢者の割合ランキング</p>
+      <p id="rank2"></p>
+    </div>
+    <div>
+      <h1>グラフ</h1>
+      <p><button id="graph">グラフ描画</button></p>
+      <div id="view"></div>
+    </div>
+    <h1>テーブル表示</h1>
+    <table id="example" class="display" style="width:100%">
+      <thead>
+        <tr>
+          {% for key in data[0].keys() %}
+          <th>{{ key }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tfoot>
+        <tr>
+          {% for key in data[0].keys() %}
+          <th>{{ key }}</th>
+          {% endfor %}
+        </tr>
+      </tfoot>
+    </table>
+
+    <script>
+          data = {{ data | tojson }};
+          //data2 = {{ data2 | tojson }};
+          pref = null;
+          cities = null;
+
+      $(document).ready(function() {
+          $.getJSON("/static/prefectures.json", function(json){
+              pref = json;
+          //    console.log( typeof(pref) );
+          //    console.log(pref);
+              make_pref_select();
+          });
+          $.getJSON("/static/cities.json", function(json){
+              cities = json;
+          //    console.log( typeof(pref) );
+          //    console.log(pref);
+              make_city_select(0);
+          });
+          //make_select();
+
+          data.sort((a, b) => parseFloat(b.rate) - parseFloat(a.rate));
+          console.log("descending", data);
+          //data2.sort((a, b) => parseFloat(b.sum) - parseFloat(a.sum));
+          //console.log("descending", data2);
+
+
+          //$("#data_length").text(data.length+data2.length);
+          $("#data_length").text(data.length);
+
+          $('#example').DataTable( {
+              initComplete: function () {
+                  this.api().columns().every( function () {
+                      var column = this;
+                      var select = $('<select><option value=""></option></select>')
+                          .appendTo( $(column.footer()).empty() )
+                          .on( 'change', function () {
+                              var val = $.fn.dataTable.util.escapeRegex(
+                                  $(this).val()
+                              );
+
+                              column
+                                  .search( val ? '^'+val+'$' : '', true, false )
+                                  .draw();
+                          } );
+
+                      column.data().unique().sort().each( function ( d, j ) {
+                          select.append( '<option value="'+d+'">'+d+'</option>' )
+                      } );
+                  } );
+              }
+          });
+
+          /**
+           * 都道府県
+           */
+          function make_pref_select(){
+              var select = $("#preflist");
+              for(let d of pref){
+                  select.append( '<option value="'+d["prefCode"]+'">'+d["prefName"]+'</option>' )
+              }
+          };
+
+          /**
+           * 市町村
+           */
+          function make_city_select(num){
+              var select = $("#citylist");
+              select.empty();
+              select.append( '<option value="-" selected></option>' );
+              for(let d of cities[num]){
+                  select.append( '<option value="'+d["cityCode"]+'">'+d["cityName"]+'</option>' );
+              }
+          };
+
+          /**
+           * 都道府県変更時
+           */
+          $('#preflist').change(function() {
+              // 選択されているvalue属性値を取り出す
+              var val = $('#preflist').val();
+              console.log(val); // 出力：ABC
+              // 選択されている表示文字列を取り出す
+              var txt = $('#preflist option:selected').text();
+              console.log(txt); // 出力：えーびーしー
+              if(val>0){
+                  console.log(txt); // 出力：えーびーしー
+                  make_city_select(val-1);
+              }
+          });
+
+          $('#citylist').change(function() {
+              // 選択されているvalue属性値を取り出す
+              var val = $('#citylist').val();
+              console.log(val); // 出力：ABC
+              // 選択されている表示文字列を取り出す
+              var txt = $('#citylist option:selected').text();
+              console.log(txt); // 出力：えーびーしー
+          });
+
+          /**
+           * 計算式の出力
+           */
+          $("#change_btn").click(function(){
+              var city = $("#citylist").val();
+
+              console.log(city);
+
+              /*
+              var rank1 = data2.findIndex(function(d, index, array){
+                  if(d.cityCode == city){
+                      return true
+                  }
+              });
+              */
+
+              console.log(rank1+1);
+              $("#rank1").text(rank1+1);
+
+              var rank2 = data.findIndex(function(d, index, array){
+                  if(d.cityCode == city){
+                      return true
+                  }
+              });
+
+              console.log(rank2+1);
+              $("#rank2").text(rank2+1);
+          });
+
+          /**
+           * VEGA-Lite
+           * Scatter(散布図)
+           */
+           $("#graph").click(function(){
+              $.getJSON("/static/vega_template/scatter.json", function(json){
+                  var spec = json;
+                  console.log(spec);
+
+                  //spec["data"][0]["values"] = data;
+
+                  //console.log(JSON.stringify( spec ) );
+                  var d0={
+                    "name": "source_0",
+                    "values": data,
+                    "transform": [
+                      {
+                        "type": "formula",
+                        "expr": "datum.rate",
+                        "as": "value1"
+                      },
+                      {
+                        "type": "formula",
+                        "expr": "datum.prefName",
+                        "as": "labels"
+                      },
+                      {
+                        "type": "formula",
+                        "expr": "datum.cityName",
+                        "as": "name"
+                      },
+                    ]
+                  };
+                  spec["data"].push(d0);
+
+                  // ２つのデータを結合
+                  // 2つ目から参照
+                  var d = {
+                    "name": "source_1",
+                    "values":data2,
+                    "transform": [
+                      {
+                        "type": "formula",
+                        "expr": "datum.sum",
+                        "as": "yplot2"
+                      },
+                      {
+                        "type": "sample",
+                        "size": 2000
+                      },
+                      {
+                        "type": "filter",
+                        "expr": "datum[\"yplot2\"] !== null && !isNaN(datum[\"yplot2\"])"
+                      }
+                    ]
+                  };
+                  //spec["data"].push(d);
+
+                  /*/ encode
+                  delete spec["marks"][0]["encode"]["update"]["y"];
+                  var e = {
+      //              "name": "marks",
+                    "type": "symbol",
+                    "style": [
+                      "point"
+                    ],
+                    "from": {
+                      "data": "source_1"
+                    },
+                    "encode": {
+                      "update": {
+                        "y": {
+                          "scale": "y",
+                          "field": "yplot2"
+                        }
+                      }
+                    }
+                  };
+                  spec["marks"].push(e);
+                  //*/
+
+                  /*/ scales
+                  spec["scales"][1]["domain"]={
+                      "data" : "source_1",
+                      "field": "yplot2"
+                  };
+                  //*/
+                  render(spec);
+              });
+           });
+
+          /**
+           * VEGA Render
+           */
+           function render(spec) {
+              console.log("描画");
+              view = new vega.View(vega.parse(spec), {
+                  renderer:  'canvas',  // renderer (canvas or svg)
+                  container: '#view',   // parent DOM container
+                  hover:     true       // enable hover processing
+              });
+              view.logLevel(vega.Info);
+              return view.runAsync();
+              //return view.run();
+          }
+      });
+    </script>
+  </body>
+</html>
